@@ -15,7 +15,7 @@
 
         body {
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #FF6B9D 0%, #C44569 25%, #F093FB 50%, #F5576C 75%, #4FACFE 100%);
+            background: #0a0a0a;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -25,17 +25,15 @@
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            border-radius: 32px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-            padding: 60px 40px;
+            background: #1a1a1a;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            padding: 48px 32px;
             max-width: 480px;
             width: 100%;
             text-align: center;
             position: relative;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid #333333;
         }
 
         .container::before {
@@ -44,9 +42,9 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, #FF6B9D, #C44569, #F093FB, #F5576C, #4FACFE);
-            border-radius: 32px 32px 0 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10a37f, #00d4aa);
+            border-radius: 16px 16px 0 0;
         }
 
         .logo {
@@ -55,17 +53,16 @@
         }
 
         .logo-circle {
-            width: 120px;
-            height: 120px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #FF6B9D, #C44569, #F093FB);
+            background: #10a37f;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 24px;
-            box-shadow: 0 20px 40px rgba(255, 107, 157, 0.3);
+            box-shadow: 0 8px 24px rgba(16, 163, 127, 0.4);
             position: relative;
-            overflow: hidden;
         }
 
         .logo-circle::before {
@@ -75,7 +72,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             animation: shine 3s infinite;
         }
 
@@ -85,126 +82,176 @@
         }
 
         .logo i {
-            font-size: 48px;
-            color: white;
+            font-size: 32px;
+            color: #ffffff;
             z-index: 1;
             position: relative;
         }
 
         h1 {
-            font-size: 32px;
-            font-weight: 700;
-            color: #1d1d1f;
+            font-size: 28px;
+            font-weight: 600;
+            color: #ffffff;
             margin-bottom: 8px;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
         }
 
         .subtitle {
-            font-size: 18px;
-            color: #86868b;
-            margin-bottom: 50px;
+            font-size: 16px;
+            color: #a0a0a0;
+            margin-bottom: 40px;
             font-weight: 400;
         }
 
-        .controls {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-bottom: 40px;
-        }
-
-        .btn {
-            padding: 20px 40px;
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
             border: none;
-            border-radius: 20px;
-            font-size: 17px;
-            font-weight: 600;
+            background: #10a37f;
+            color: white;
+            font-size: 32px;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 12px;
-            min-width: 160px;
             justify-content: center;
+            margin: 0 auto 32px;
+            box-shadow: 0 8px 24px rgba(16, 163, 127, 0.4);
             position: relative;
-            overflow: hidden;
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s;
+        .mic-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(16, 163, 127, 0.5);
         }
 
-        .btn:hover::before {
-            left: 100%;
+        .mic-button:active:not(:disabled) {
+            transform: translateY(0px);
+            box-shadow: 0 4px 16px rgba(16, 163, 127, 0.4);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #FF6B9D, #C44569);
+        .stop-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: #ef4444;
             color: white;
-            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
+            font-size: 32px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+            position: relative;
         }
 
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 15px 35px rgba(255, 107, 157, 0.5);
+        .stop-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(239, 68, 68, 0.5);
         }
 
-        .btn-danger {
-            background: linear-gradient(135deg, #F5576C, #FF6B9D);
-            color: white;
-            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+        .stop-button:active:not(:disabled) {
+            transform: translateY(0px);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
         }
 
-        .btn-danger:hover:not(:disabled) {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 15px 35px rgba(245, 87, 108, 0.5);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
+        .mic-button:disabled {
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none !important;
         }
 
+        .mic-button.listening {
+            background: #059669;
+            animation: pulse 2s infinite;
+        }
+
+        .mic-button.processing {
+            background: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+
+        .mic-button.interrupting {
+            background: #ef4444;
+            animation: pulse-interrupt 0.5s ease-in-out;
+        }
+        
+        .mic-button.conversation-active {
+            background: #10a37f;
+        }
+        
+        .mic-button.conversation-active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(16, 163, 127, 0.5);
+        }
+        
+        .mic-button.voice-detected {
+            background: #3b82f6;
+            animation: pulse-voice 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-voice {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes pulse-interrupt {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .status.interrupting {
+            color: #ff6b6b;
+            background: #2e1a1a;
+            border-color: #ff6b6b;
+            animation: blink 0.5s ease-in-out;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .status {
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 40px;
+            background: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 32px;
             font-weight: 500;
-            color: #1d1d1f;
+            color: #e0e0e0;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            min-height: 64px;
-            backdrop-filter: blur(10px);
+            min-height: 56px;
+            font-size: 14px;
         }
 
-        .status.recording {
-            background: rgba(255, 107, 157, 0.1);
-            border-color: rgba(255, 107, 157, 0.3);
-            color: #FF6B9D;
-            animation: pulse 2s infinite;
+        .status.listening {
+            background: #1a2e1a;
+            border-color: #10a37f;
+            color: #00d4aa;
         }
 
         .status.processing {
-            background: rgba(76, 175, 254, 0.1);
-            border-color: rgba(76, 175, 254, 0.3);
-            color: #4FACFE;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.02); }
+            background: #1a1f2e;
+            border-color: #3b82f6;
+            color: #60a5fa;
         }
 
         .audio-player {
@@ -222,6 +269,31 @@
             animation: slideUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
+        .conversation-indicator {
+            background: #1a2e1a;
+            border: 1px solid #10a37f;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            color: #00d4aa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .conversation-indicator i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @keyframes slideUp {
             from {
                 opacity: 0;
@@ -234,64 +306,42 @@
         }
 
         .features {
-            margin-top: 40px;
+            margin-top: 32px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            gap: 16px;
         }
 
         .feature {
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 20px;
-            padding: 24px 16px;
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 20px 16px;
             text-align: center;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: transform 0.3s ease;
+            border: 1px solid #404040;
+            transition: transform 0.2s ease;
         }
 
         .feature:hover {
-            transform: translateY(-4px);
+            transform: translateY(-2px);
+            background: #333333;
         }
 
         .feature i {
-            font-size: 28px;
-            color: #FF6B9D;
+            font-size: 24px;
+            color: #10a37f;
             margin-bottom: 12px;
         }
 
         .feature h3 {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            color: #1d1d1f;
+            color: #ffffff;
             margin-bottom: 6px;
         }
 
         .feature p {
-            font-size: 13px;
-            color: #86868b;
-        }
-
-        .recording-indicator {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #FF6B9D;
-            display: none;
-            animation: blink 1.2s infinite;
-            box-shadow: 0 0 20px rgba(255, 107, 157, 0.6);
-        }
-
-        .recording-indicator.active {
-            display: block;
-        }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; transform: scale(1); }
-            51%, 100% { opacity: 0.4; transform: scale(0.8); }
+            font-size: 12px;
+            color: #a0a0a0;
         }
 
         .floating-shapes {
@@ -307,7 +357,7 @@
         .shape {
             position: absolute;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(16, 163, 127, 0.1);
             animation: float 6s ease-in-out infinite;
         }
 
@@ -351,14 +401,10 @@
                 font-size: 28px;
             }
 
-            .controls {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .btn {
-                width: 100%;
-                max-width: 240px;
+            .mic-button {
+                width: 100px;
+                height: 100px;
+                font-size: 40px;
             }
 
             .features {
@@ -385,49 +431,49 @@
     </div>
 
     <div class="container">
-        <div class="recording-indicator" id="recordingIndicator"></div>
-        
         <div class="logo">
             <div class="logo-circle">
-                <i class="fas fa-microphone-alt"></i>
+                <i class="fas fa-motorcycle"></i>
             </div>
-            <h1>Revolt Motors</h1>
-            <p class="subtitle">Voice Assistant</p>
+            <h1>Talk to Rev</h1>
+            <p class="subtitle">Revolt Motors Voice Assistant</p>
         </div>
         
-        <div class="controls">
-            <button id="startBtn" class="btn btn-primary">
-                <i class="fas fa-play"></i>
-                Start Conversation
-            </button>
-            <button id="stopBtn" class="btn btn-danger" disabled>
-                <i class="fas fa-stop"></i>
-                Stop
-            </button>
-        </div>
+        <button id="micButton" class="mic-button">
+            <i class="fas fa-microphone"></i>
+        </button>
+        
+        <button id="stopButton" class="stop-button">
+            <i class="fas fa-stop"></i>
+        </button>
         
         <div id="status" class="status">
             <i class="fas fa-circle"></i>
-            Ready to start conversation
+            Tap to start continuous conversation
         </div>
         
-        <audio id="aiAudio" class="audio-player" controls></audio>
+        <audio id="aiAudio" class="audio-player" preload="auto" style="display: none;"></audio>
+        
+        <div id="conversationIndicator" class="conversation-indicator" style="display: none;">
+            <i class="fas fa-circle"></i>
+            <span>Continuous Conversation Active</span>
+        </div>
         
         <div class="features">
             <div class="feature">
-                <i class="fas fa-robot"></i>
-                <h3>AI Powered</h3>
-                <p>Advanced voice recognition</p>
+                <i class="fas fa-motorcycle"></i>
+                <h3>Electric Bikes</h3>
+                <p>Learn about our models</p>
             </div>
             <div class="feature">
                 <i class="fas fa-bolt"></i>
-                <h3>Real-time</h3>
-                <p>Instant responses</p>
+                <h3>Fast Charging</h3>
+                <p>Quick power solutions</p>
             </div>
             <div class="feature">
-                <i class="fas fa-shield-alt"></i>
-                <h3>Secure</h3>
-                <p>Privacy focused</p>
+                <i class="fas fa-map-marker-alt"></i>
+                <h3>Dealerships</h3>
+                <p>Find locations near you</p>
             </div>
         </div>
     </div>

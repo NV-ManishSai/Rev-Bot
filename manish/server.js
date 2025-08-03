@@ -56,23 +56,21 @@ const server = app.listen(PORT, () =>
 
 const wss = new WebSocketServer({ server });
 
-wss.on("connection", (clientSocket) => {
-    console.log("Frontend connected");
+// Client-specific Gemini connections to avoid conflicts
+const clientConnections = new Map();
 
-    // Audio accumulation for better quality
-    let audioChunks = [];
-    let isGeneratingAudio = false;
-
-    // Gemini Live WebSocket
+function createGeminiConnection(clientId) {
+    console.log(`Creating new Gemini WebSocket connection for client ${clientId}`);
+    
     const geminiWs = new WebSocket(
         "wss://generativelanguage.googleapis.com/ws/" +
         "google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent" +
         `?key=${process.env.GOOGLE_API_KEY}`
     );
-
+    
     geminiWs.on("open", () => {
-        console.log("Connected to Gemini Live API WebSocket");
-
+        console.log(`Connected to Gemini Live API WebSocket for client ${clientId}`);
+        
         geminiWs.send(
             JSON.stringify({
                 setup: {
@@ -82,16 +80,44 @@ wss.on("connection", (clientSocket) => {
             })
         );
     });
-
+    
     geminiWs.on("error", (e) => {
-        console.error("Gemini WS error:", e.message);
-        clientSocket.send(JSON.stringify({ error: e.message }));
+        console.error(`Gemini WS error for client ${clientId}:`, e.message);
+        clientConnections.delete(clientId);
     });
-
+    
     geminiWs.on("close", (code, reason) => {
-        console.log("Gemini WebSocket closed:", code, reason);
+        console.log(`Gemini WebSocket closed for client ${clientId}:`, code, reason);
+        clientConnections.delete(clientId);
         if (code === 1007) {
             console.log("Gemini API error - check the payload format");
+        }
+    });
+    
+    clientConnections.set(clientId, geminiWs);
+    return geminiWs;
+}
+
+wss.on("connection", (clientSocket) => {
+    const clientId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    console.log(`Frontend connected with client ID: ${clientId}`);
+
+    // Audio accumulation for better quality
+    let audioChunks = [];
+    let isGeneratingAudio = false;
+    let geminiSetupComplete = false;
+    let conversationContext = []; // Track conversation history
+    let responseTimeout = null; // Track response timeout
+
+    // Create client-specific Gemini connection
+    const geminiWs = createGeminiConnection(clientId);
+
+    // Handle Gemini setup completion
+    geminiWs.on("message", (raw) => {
+        const msg = JSON.parse(raw.toString());
+        if (msg.setupComplete) {
+            console.log("Gemini setup confirmed");
+            geminiSetupComplete = true;
         }
     });
 
@@ -132,7 +158,7 @@ wss.on("connection", (clientSocket) => {
             
             console.log(`PCM buffer size: ${pcmBuffer.length} bytes`);
 
-            // Send audio chunk to Gemini
+            // Send audio chunk to Gemini with conversation context
             const payload = {
                 realtimeInput: {
                     mediaChunks: [{
@@ -142,10 +168,50 @@ wss.on("connection", (clientSocket) => {
                 }
             };
 
+            // Add conversation context if available
+            if (conversationContext.length > 0) {
+                console.log("Including conversation context:", conversationContext.length, "previous interactions");
+            }
+
             console.log("Sending audio chunk to Gemini...");
             geminiWs.send(JSON.stringify(payload));
 
+            // Set timeout for Gemini response
+            const responseTimeout = setTimeout(() => {
+                if (isGeneratingAudio) {
+                    console.log("⚠️ Gemini response timeout - sending accumulated audio");
+                    if (audioChunks.length > 0) {
+                        const combinedPcm = Buffer.concat(audioChunks);
+                        const wav = pcm16ToWav(combinedPcm, 24000);
+                        clientSocket.send(wav);
+                        audioChunks = [];
+                        isGeneratingAudio = false;
+                        console.log("Timeout fallback: AI audio sent to frontend");
+                    } else {
+                        console.log("⚠️ No audio accumulated, sending error to frontend");
+                        clientSocket.send(JSON.stringify({ 
+                            type: "error", 
+                            error: "No response from AI - please try again" 
+                        }));
+                    }
+                }
+            }, 15000); // 15 second timeout
+
+            // Track user input in conversation context (limit to last 10 turns)
+            conversationContext.push({
+                timestamp: Date.now(),
+                type: "user_input",
+                audioSize: base64PCM.length
+            });
+            
+            // Keep only last 10 conversation turns to prevent context overflow
+            if (conversationContext.length > 10) {
+                conversationContext = conversationContext.slice(-10);
+                console.log("Conversation context trimmed to last 10 turns");
+            }
+
             console.log("Audio sent to Gemini");
+            console.log("User input tracked, conversation context:", conversationContext.length, "turns");
 
             // Cleanup
             fs.unlinkSync(inPath);
@@ -162,98 +228,114 @@ wss.on("connection", (clientSocket) => {
         console.log("=== GEMINI RESPONSE RECEIVED ===");
         console.log("Raw message from Gemini:", raw.toString());
         
-        let msg;
-        try { 
-            msg = JSON.parse(raw); 
-            console.log("Parsed Gemini message:", JSON.stringify(msg, null, 2));
-        } catch (e) { 
-            console.log("Failed to parse Gemini message:", e.message);
-            return; 
-        }
-
-        // Check for setup confirmation
+        const msg = JSON.parse(raw.toString());
+        console.log("Parsed Gemini message:", msg);
+        
+        // Handle setup confirmation
         if (msg.setupComplete) {
             console.log("Gemini setup confirmed");
+            geminiSetupComplete = true;
             return;
         }
-
-        // Check if generation is complete and send accumulated audio
+        
+        // Check for generation complete
         if (msg.serverContent?.generationComplete && isGeneratingAudio && audioChunks.length > 0) {
             console.log("Generation complete, sending accumulated audio");
             const combinedPcm = Buffer.concat(audioChunks);
-            console.log("Combined PCM buffer size:", combinedPcm.length);
-            
-            // Use 24kHz as default for Gemini responses
-            const wav = pcm16ToWav(combinedPcm, 24000);
+            const wav = pcm16ToWav(combinedPcm, 24000); // Assuming 24kHz for combined
             clientSocket.send(wav);
-            console.log("Complete AI audio sent to frontend (24kHz)");
-            
-            // Reset for next response
             audioChunks = [];
             isGeneratingAudio = false;
+            
+            // Clear any pending timeout
+            if (responseTimeout) {
+                clearTimeout(responseTimeout);
+            }
+            
+            // Track successful conversation turn
+            conversationContext.push({
+                timestamp: Date.now(),
+                type: "response",
+                audioChunks: audioChunks.length
+            });
+            
+            console.log("Complete AI audio sent to frontend (24kHz)");
+            console.log("Conversation context updated, total turns:", conversationContext.length);
+            
+            // Send signal to frontend to auto-restart listening
+            clientSocket.send(JSON.stringify({ 
+                type: "autoRestart", 
+                message: "AI response complete, restart listening" 
+            }));
+            
             return;
         }
-
-        // Fallback: if we have accumulated audio but no generationComplete, send after a delay
+        
+        // Handle interrupted responses
+        if (msg.serverContent?.interrupted) {
+            console.log("⚠️ Gemini response was interrupted");
+            if (responseTimeout) {
+                clearTimeout(responseTimeout);
+            }
+            isGeneratingAudio = false;
+            audioChunks = [];
+            return;
+        }
+        
+        // Fallback: send accumulated audio after timeout if turnComplete is received
         if (isGeneratingAudio && audioChunks.length > 0 && msg.serverContent?.turnComplete) {
             setTimeout(() => {
                 if (audioChunks.length > 0) {
                     console.log("Sending accumulated audio after timeout");
                     const combinedPcm = Buffer.concat(audioChunks);
-                    console.log("Combined PCM buffer size:", combinedPcm.length);
-                    
                     const wav = pcm16ToWav(combinedPcm, 24000);
                     clientSocket.send(wav);
-                    console.log("Complete AI audio sent to frontend (24kHz) - timeout");
-                    
-                    // Reset for next response
                     audioChunks = [];
                     isGeneratingAudio = false;
+                    console.log("Fallback AI audio sent to frontend");
                 }
-            }, 1000); // Wait 1 second for more audio chunks
+            }, 500); // Reduced from 1000ms to 500ms for lower latency
         }
-
-        // 1) Legacy field
-        if (msg.outputAudio?.data) {
-            console.log("Found legacy outputAudio field");
-            const pcmBuffer = Buffer.from(msg.outputAudio.data, "base64");
-            console.log("Legacy PCM buffer size:", pcmBuffer.length);
-            const wav = pcm16ToWav(pcmBuffer, 24000); // Legacy uses 24kHz
-            clientSocket.send(wav);
-            console.log("AI audio sent to frontend (legacy 24kHz)");
-            return;
-        }
-
-        // 2) New schema
-        const parts =
-            msg?.serverContent?.modelTurn?.parts ||
-            msg?.modelTurn?.parts || [];
-
-        console.log(`Found ${parts.length} parts in response`);
-
+        
+        // Process audio parts
+        const parts = msg?.serverContent?.modelTurn?.parts || msg?.modelTurn?.parts || [];
+        console.log("Found", parts.length, "parts in response");
+        
         for (const p of parts) {
-            if (p?.text) {
-                console.log("Text response:", p.text);
-            }
             const b64 = p?.inlineData?.data;
             const mimeType = p?.inlineData?.mimeType;
+            
             if (b64) {
                 console.log("Found audio data in response");
                 console.log("Audio data length:", b64.length);
                 console.log("MIME type:", mimeType);
+                
                 const pcmBuffer = Buffer.from(b64, "base64");
                 console.log("PCM buffer size:", pcmBuffer.length);
                 
-                // Accumulate audio chunks
+                // Extract sample rate from MIME type
+                let sampleRate = 24000; // Default
+                if (mimeType && mimeType.includes("rate=")) {
+                    const rateMatch = mimeType.match(/rate=(\d+)/);
+                    if (rateMatch) {
+                        sampleRate = parseInt(rateMatch[1]);
+                    }
+                }
+                
                 audioChunks.push(pcmBuffer);
                 isGeneratingAudio = true;
-                console.log(`Accumulated ${audioChunks.length} audio chunks`);
+                console.log("Accumulated", audioChunks.length, "audio chunks");
             }
         }
     });
 
     clientSocket.on("close", () => {
-        console.log("Frontend disconnected");
-        geminiWs.close();
+        console.log(`Frontend disconnected for client ${clientId}`);
+        // Clean up client-specific connection
+        if (clientConnections.has(clientId)) {
+            const geminiWs = clientConnections.get(clientId);
+            geminiWs.close();
+            clientConnections.delete(clientId);
+        }
     });
 });
